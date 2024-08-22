@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
-import { pgTable, serial, timestamp, varchar, text } from "drizzle-orm/pg-core";
+import { desc, sql } from "drizzle-orm";
+import { pgTable, serial, timestamp, varchar, text, integer } from "drizzle-orm/pg-core";
 
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
@@ -12,4 +12,14 @@ export const users = pgTable('users', {
     role: varchar('role', { length: 12 }).notNull().default("customer"),
     updatedAt: timestamp('updated_at').defaultNow(),
     createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`), // another way to get timestamp
-  })
+  });
+
+export const products = pgTable('products', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(),
+    image: text("image"),
+    description: text('description'),
+    price: integer('price').notNull(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+    createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
+  });
