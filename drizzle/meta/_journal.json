@@ -22,6 +22,13 @@
       "when": 1724494392008,
       "tag": "0002_mighty_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1724581997860,
+      "tag": "0003_pale_captain_marvel",
+      "breakpoints": true
     }
   ]
 }
