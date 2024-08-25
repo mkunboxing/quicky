@@ -15,6 +15,13 @@
       "when": 1724233126930,
       "tag": "0001_flimsy_colleen_wing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1724494392008,
+      "tag": "0002_mighty_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }
