@@ -22,3 +22,15 @@ export async function POST(request: Request) {
         
     }
 }
+
+export async function GET(){
+
+    try {
+        const allWarehouses = await db.select().from(warehouses); // we can write limit for pagination here
+
+        return Response.json(allWarehouses);
+    } catch (error) {
+        return Response.json({message: "failed to fetch warehouses"}, {status: 500});
+    }
+
+}
