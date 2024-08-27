@@ -1,8 +1,9 @@
+import { Button } from '@/components/ui/button'
 import React from 'react'
 
 const AdminPage = () => {
   return (
-    <div>AdminPage</div>
+    <Button>Click me</Button>
   )
 }
 
