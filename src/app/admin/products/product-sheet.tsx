@@ -12,11 +12,12 @@ import { create } from "domain";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createProduct } from "@/http/api";
 import { useNewProduct } from "@/store/product/product-store";
+import { useToast } from "@/components/ui/use-toast";
 
 const ProductSheet = () => {
     const {isOpen,onClose} = useNewProduct();
     const queryClient = useQueryClient();
-
+    const { toast } = useToast();
     
 
     const {mutate , isPending} = useMutation({
@@ -24,7 +25,9 @@ const ProductSheet = () => {
         mutationFn: (data: FormData)=> createProduct(data),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ["products"]});
-            alert("Product created successfully");
+            toast({
+              title: "Product created",
+            })
             onClose();
         },
     })
