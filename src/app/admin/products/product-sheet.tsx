@@ -19,7 +19,7 @@ const ProductSheet = () => {
 
     
 
-    const {mutate} = useMutation({
+    const {mutate , isPending} = useMutation({
         mutationKey: ["create-product"],
         mutationFn: (data: FormData)=> createProduct(data),
         onSuccess: () => {
@@ -43,7 +43,7 @@ const ProductSheet = () => {
         <SheetHeader>
           <SheetTitle>Create Product</SheetTitle>
         </SheetHeader>
-        <CreateProductForm onSubmit={onSubmit} />
+        <CreateProductForm onSubmit={onSubmit} disabled={isPending} />
       </SheetContent>
     </Sheet>
   );
