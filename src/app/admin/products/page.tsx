@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const ProductPage = () => {
   const { onOpen } = useNewProduct();
-  const { data: products, isLoading } = useQuery<Product[]>({
+  const { data: products, isLoading, isError, error} = useQuery<Product[]>({
     queryKey: ["products"],
     queryFn: getAllProducts,
   });
@@ -27,6 +27,8 @@ const ProductPage = () => {
         </Button>
         <ProductSheet />
       </div>
+
+      {isError && <span className="text-red-500">Something went wrong</span>}
 
       {isLoading ? (
         <div className="flex flex-col items-center gap-5 justify-center">
