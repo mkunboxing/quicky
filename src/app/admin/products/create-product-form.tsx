@@ -32,8 +32,6 @@ const CreateProductForm = ({ onSubmit, disabled }: { onSubmit: (formValus: FormV
 
     const handleSubmit = (values: FormValues) => {
         onSubmit(values);
-
-        form.reset();
     };
 
     return (
