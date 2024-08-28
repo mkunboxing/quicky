@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from '@/providers/query-provider';
 import { Toaster } from "@/components/ui/toaster";
+import dynamic from 'next/dynamic';
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -14,6 +15,11 @@ export const metadata: Metadata = {
   title: "Quicky Inc",
   description: "The best online store in the world",
 };
+
+const ReactQueryDevtools = dynamic(
+  () => import('@tanstack/react-query-devtools').then(mod => mod.ReactQueryDevtools),
+  { ssr: false }
+);
 
 
 export default function RootLayout({
@@ -29,8 +35,10 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryProvider>
         <Toaster />
       </body>
     </html>
