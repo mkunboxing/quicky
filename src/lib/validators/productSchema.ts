@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const isServer = typeof window === "undefined";
+export const isServer = typeof window === "undefined";
 
 export const productSchema = z.object({
     name: z.string({message: "Name is required"}).min(3),

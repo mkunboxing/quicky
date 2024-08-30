@@ -1,6 +1,6 @@
 import { db } from "@/lib/db/db";
 import { products } from "@/lib/db/schema";
-import { productSchema } from "@/lib/validators/productSchema";
+import { productSchema,isServer } from "@/lib/validators/productSchema";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unlink } from "node:fs/promises";
@@ -23,10 +23,14 @@ export async function POST(request: Request) {
         return Response.json({message: err}, {status: 400});
     }
 
-    const filename = `${Date.now()}.${validateData.image.name.split(".").pop()}`; // mk.png to 1212125.png
+    const inputImage = isServer
+    ? (validateData.image as File)
+    : (validateData.image as FileList)[0];
+const filename = `${Date.now()}.${inputImage.name.split('.').slice(-1)}`;
+     // mk.png to 1212125.png
 
     try {
-        const buffer = Buffer.from(await validateData.image.arrayBuffer());
+        const buffer = Buffer.from(await inputImage.arrayBuffer());
         await writeFile(path.join(process.cwd(),"public/assets",filename),buffer);
     } catch (err) {
         return Response.json({message: err}, {status: 500});
