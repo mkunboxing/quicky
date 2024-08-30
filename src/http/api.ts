@@ -1,5 +1,5 @@
 import { api } from "./client"
-
+import { Warehouse } from '@/types';
 export const getAllProducts = async () => {
     const response = await api.get("/products");
 
@@ -13,5 +13,15 @@ export const createProduct = async (data: FormData) => {
         },
     });
 
+    return response.data;
+};
+
+export const getAllWarehouses = async () => {
+    const response = await api.get('/warehouses');
+    return await response.data;
+};
+
+export const createWarehouse = async (data: Warehouse) => {
+    const response = await api.post('/warehouses', data);
     return response.data;
 };
