@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAllWarehouses } from '@/http/api';
-import { Product } from '@/types';
+import { Warehouse } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { DataTable } from './data-table';
 import { columns } from './columns';
@@ -18,7 +18,7 @@ type SkeletonWarehouse = {
     pincode: React.ReactNode;
   };
 
-  type ProductOrSkeleton = Product | SkeletonWarehouse;
+  type WarehouseOrSkeleton = Warehouse | SkeletonWarehouse;
 
 const WarehousesPage = () => {
     const { onOpen } = useNewWarehouse();
@@ -27,7 +27,7 @@ const WarehousesPage = () => {
         data: warehouses,
         isError,
         isFetching,
-    } = useQuery<Product[]>({
+    } = useQuery<Warehouse[]>({
         queryKey: ['warehouses'],
         queryFn: getAllWarehouses,
     });
@@ -41,7 +41,7 @@ const WarehousesPage = () => {
   }));
 
   // Combine the products and skeleton data into a single array
-  const tableData: ProductOrSkeleton[] = isFetching ? skeletonData : (warehouses || []);
+  const tableData: WarehouseOrSkeleton[] = isFetching ? skeletonData : (warehouses || []);
 
     return (
       <>
