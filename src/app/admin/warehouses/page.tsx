@@ -5,10 +5,9 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAllWarehouses } from '@/http/api';
 import { Warehouse } from '@/types';
-import { Loader2 } from 'lucide-react';
-import { DataTable } from './data-table';
+import { DataTable } from '../_components/data-table';
 import { columns } from './columns';
-import { useNewWarehouse } from '@/store/product/warehouse-store';
+import { useNewWarehouse } from '@/store/warehouse/warehouse-store';
 import WarehouseSheet from './warehouse-sheet';
 import { Skeleton } from "@/components/ui/skeleton";
 
