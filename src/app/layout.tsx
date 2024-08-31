@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import AuthProvider from "@/providers/auth-provider";
+import Head from 'next/head'; 
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -35,6 +36,9 @@ export default async function RootLayout({
   console.log("session", session);
   return (
     <html lang="en" suppressHydrationWarning>
+       <Head>
+        <meta name="cryptomus" content="993cff7d" />
+      </Head>
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
