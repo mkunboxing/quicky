@@ -6,9 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { getAllWarehouses } from '@/http/api';
 import { Warehouse } from '@/types';
 import { DataTable } from '../_components/data-table';
-import { columns } from './columns';
+import { columns } from './_components/columns';
 import { useNewWarehouse } from '@/store/warehouse/warehouse-store';
-import WarehouseSheet from './warehouse-sheet';
+import WarehouseSheet from './_components/warehouse-sheet';
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SkeletonWarehouse = {
