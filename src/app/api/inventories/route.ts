@@ -20,6 +20,7 @@ export async function POST(request: Request) {
 
         return Response.json({ message: 'OK' }, { status: 201 });
     } catch (err) {
+        // todo: check database status code, and if it is duplicate value code then send the message to the client.
         return Response.json(
             { message: 'Failed to store the inventory into the database' },
             { status: 500 }
