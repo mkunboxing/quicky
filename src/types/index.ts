@@ -1,3 +1,4 @@
+import { warehouses } from '@/lib/db/schema';
 export interface Product {
     id: number;
     name: string;
@@ -16,4 +17,11 @@ export interface DeliveryPerson {
     name: string;
     phone: string;
     warehouseId: number;
+}
+
+export interface Inventory {
+    id: number;
+    sku: string;
+    warehouse: string;
+    product: string;
 }
