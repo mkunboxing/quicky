@@ -12,6 +12,7 @@ export default function Header() {
         { label: 'Best Selling', href: '/best-selling' },
         { label: 'Offers', href: '/offers' },
         { label: 'Orders', href: '/account/orders' },
+        { label: 'Admin', href: '/admin' },
     ];
 
     return (
