@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 import { QueryProvider } from '@/providers/query-provider';
 import { Toaster } from "@/components/ui/toaster";
 import dynamic from 'next/dynamic';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/authOptions";
+import AuthProvider from "@/providers/auth-provider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -22,11 +25,14 @@ const ReactQueryDevtools = dynamic(
 );
 
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const session = await getServerSession(authOptions)
+  console.log("session", session);
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -36,7 +42,9 @@ export default function RootLayout({
         )}
       >
         <QueryProvider>
-          {children}
+          <AuthProvider session={session}>
+            {children}
+          </AuthProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryProvider>
         <Toaster />

@@ -1,7 +1,7 @@
 "use client";
 import { getSingleProduct } from "@/http/api";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import React from "react";
 import Header from "../../_components/header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,10 +23,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 const SingleProduct = () => {
   const param = useParams();
+  const pathname = usePathname();
   const id = param.id;
+
+  const {data: session} = useSession();
+  
 
   const form = useForm<z.infer<typeof orderSchema>>({
     resolver: zodResolver(orderSchema),
@@ -177,8 +183,16 @@ const SingleProduct = () => {
                   </div>
                   <Separator className="my-6 bg-brown-900" />
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-semibold">$50</span>
-                    <Button type="submit">Buy Now</Button>
+                    <span className="text-3xl font-semibold">${product?.price}</span>
+                    {
+                      session ? (
+                        <Button type="submit">Buy Now</Button>
+                      ) : (
+                        <Link href={`/api/auth/signin?callbackUrl=${pathname}`}>
+                        <Button>Sign in to buy</Button>
+                        </Link>
+                      )
+                    }
                   </div>
                 </form>
               </Form>
