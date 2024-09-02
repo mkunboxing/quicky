@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
+// @ts-ignore
 import {load} from '@cashfreepayments/cashfree-js';
 import axios, { AxiosError } from "axios";
 type CustomError = {
