@@ -33,3 +33,10 @@ export interface InventoryData {
     productId: number;
 }
 
+export interface OrderData {
+    productId: number;
+    qty: number;
+    pincode: string;
+    address: string;
+}
+

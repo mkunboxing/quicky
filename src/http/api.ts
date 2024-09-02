@@ -1,5 +1,5 @@
 import { api } from "./client"
-import { DeliveryPerson, Inventory, InventoryData, Warehouse } from '@/types';
+import { DeliveryPerson, Inventory, InventoryData, OrderData, Warehouse } from '@/types';
 export const getAllProducts = async () => {
     const response = await api.get("/products");
 
@@ -48,5 +48,15 @@ export const createInventory = async (data: InventoryData) => {
 
 export const getSingleProduct = async (id: string) => {
     const response = await api.get(`/products/${id}`);
+    return await response.data;
+};
+
+export const placeOrder = async (data: OrderData) => {
+    const response = await api.post(`/orders`, data);
+    return await response.data;
+};
+
+export const GetOrder = async (data: any) => {
+    const response = await api.get(`/orders`, data);
     return await response.data;
 };

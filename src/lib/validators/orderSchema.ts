@@ -5,7 +5,7 @@ export const orderSchema = z.object({
   pincode: z
     .string({ message: "Pincode should be a string" })
     .length(6, "Pincode should be 6 chars long"),
-  qty: z.string({ message: "Qty should be a number" }),
+  qty: z.number({ message: "Qty should be a number" }),
   address: z
     .string({ message: "Address should be a string" })
     .min(5, { message: "Address should be at least 5 chars long" }),

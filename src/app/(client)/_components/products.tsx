@@ -13,8 +13,7 @@ const Products = () => {
   const skeletons = Array.from({ length: 4 });
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
-    queryFn: getAllProducts,
-    staleTime: 50 * 1000, // this is to cache the data for 50 seconds
+    queryFn: getAllProducts, // this is to cache the data for 50 seconds
   });
 
   return (

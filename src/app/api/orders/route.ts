@@ -1,11 +1,66 @@
-import { authOptions } from '@/lib/auth/authOptions';
-import { db } from '@/lib/db/db';
-import { deliveryPersons, inventories, orders, products, warehouses } from '@/lib/db/schema';
-import { orderSchema } from '@/lib/validators/orderSchema';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
-import { getServerSession } from 'next-auth';
+import { authOptions } from "@/lib/auth/authOptions";
+import { db } from "@/lib/db/db";
+import {
+  deliveryPersons,
+  inventories,
+  orders,
+  products,
+  warehouses,
+} from "@/lib/db/schema";
+import { orderSchema } from "@/lib/validators/orderSchema";
+import axios from "axios";
+import { and, eq, inArray, isNull } from "drizzle-orm";
+import { getServerSession } from "next-auth";
+import {Cashfree} from "cashfree-pg";
+import crypto from 'crypto';
 
-export async function POST(request: Request) {
+
+Cashfree.XClientId = process.env.CASHFREE_APP_ID;
+Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
+
+function generateOrderId() {
+    const uniqueId = crypto.randomBytes(16).toString('hex');
+
+    const hash = crypto.createHash('sha256');
+    hash.update(uniqueId);
+
+    const orderId = hash.digest('hex');
+
+    return orderId.substr(0, 12);
+}
+
+let finalOrder: any = null;
+
+export async function GET(request: Request) {
+    console.log('GET orders');
+    const { searchParams } = new URL(request.url);
+    const orderAmount = parseFloat(searchParams.get('order_amount') || '1.00');
+  
+    try {
+      let request = {
+        "order_amount": orderAmount,
+        "order_currency": "INR",
+        "order_id": await generateOrderId(),
+        "customer_details": {
+          "customer_id": "mukul",
+          "customer_phone": "7274989153",
+          "customer_name": "mkunboxing",
+          "customer_email": "mkwebdev@example.com"
+        },
+      }
+  
+      const response = await Cashfree.PGCreateOrder("2023-08-01", request);
+      console.log(response.data);
+      return Response.json(response.data);
+    } catch (error) {
+      console.log(error);
+      return Response.json({ message: 'Error creating order' }, { status: 500 });
+    }
+  }
+  
+  
+  export async function POST(request: Request) {
     // get session
     const session = await getServerSession(authOptions);
     console.log('session', session);
@@ -47,19 +102,19 @@ export async function POST(request: Request) {
         return Response.json({ message: 'No product found' }, { status: 400 });
     }
     let transactionError: string = '';
-    let finalOrder: any = null;
+
 
     try {
         finalOrder = await db.transaction(async (tx) => {
             // create order
             const order = await tx
                 .insert(orders)
-                //@ts-ignore
+
                 .values({
                     ...validatedData,
                     // @ts-ignore
                     userId: session.token.id,
-                    price: Number(foundProducts[0].price) * Number(validatedData.qty),
+                    price: foundProducts[0].price * validatedData.qty,
                     // todo: move all statuses to enum or const
                     status: 'received',
                 })
@@ -77,10 +132,10 @@ export async function POST(request: Request) {
                         isNull(inventories.orderId)
                     )
                 )
-                .limit(Number(validatedData.qty))
+                .limit(validatedData.qty)
                 .for('update', { skipLocked: true });
 
-            if (availableStock.length < Number(validatedData.qty)) {
+            if (availableStock.length < validatedData.qty) {
                 transactionError = `Stock is low, only ${availableStock.length} products available`;
                 tx.rollback();
                 return;
@@ -138,6 +193,11 @@ export async function POST(request: Request) {
             { status: 500 }
         );
     }
+    console.log('final order:', finalOrder);
 
-    // create invoice
+    // payment then return order
+    return Response.json(finalOrder, { status: 200 });
+   
+    
 }
+  

@@ -12,6 +12,7 @@
     "db:drop": "drizzle-kit drop --config=drizzle.config.ts"
   },
   "dependencies": {
+    "@cashfreepayments/cashfree-js": "^1.0.5",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",
@@ -25,8 +26,10 @@
     "@tanstack/react-query-devtools": "^5.52.2",
     "@tanstack/react-table": "^8.20.5",
     "axios": "^1.7.5",
+    "cashfree-pg": "^4.2.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.33.0",
     "esbuild-register": "^3.6.0",
