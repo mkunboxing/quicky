@@ -123,6 +123,7 @@ const SingleProduct = () => {
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
   const verifyPayment = async (orderId: string) => {
+    console.log("Verifying payment for order:", orderId);
     try {
       const response = await axios.get(`/api/verify-payment?order_id=${orderId}`);
       const data = response.data;
