@@ -124,31 +124,57 @@ const SingleProduct = () => {
     try {
       const options = {
         method: 'GET',
-        url: `https://sandbox.cashfree.com/pg/orders/${orderId}`,
+        url: `https://sandbox.cashfree.com/pg/orders/${orderId}/payments`,
         headers: {
           accept: 'application/json',
-          'x-api-version': '2023-08-01',
+          'x-api-version': '2022-09-01',
           'x-client-id': process.env.CASHFREE_APP_ID,
           'x-client-secret': process.env.CASHFREE_SECRET_KEY
         }
       };
+  
+      console.log(process.env.CASHFREE_APP_ID);
+      console.log(process.env.CASHFREE_SECRET_KEY);
+  
       let res = await axios.request(options);
       const response = res.data;
-
+  
       console.log("Payment verification response:", response);
-      
-      if (response) {
+  
+      // Assuming `response` is an array of payment objects
+      if (response && response.length > 0) {
+        const payment = response[0]; // Get the first payment object
+  
+        if (payment.payment_status === "SUCCESS") {
+          toast({
+            title: "Payment verified",
+            description: "The payment was successful.",
+          });
+          alert("Payment verified");
+          // Handle post-payment actions here
+        } else {
+          toast({
+            title: "Payment not successful",
+            description: "The payment status is not successful.",
+            variant: "destructive",
+          });
+          alert("Payment not successful");
+          // Handle the unsuccessful payment scenario
+        }
+      } else {
         toast({
-          title: "Payment verified",
+          title: "No payment found",
+          description: "No payment data available for this order.",
+          variant: "destructive",
         });
-        alert("Payment verified");
-        // Handle post-payment actions here
       }
-      return response.data;
+  
+      return response;
     } catch (error) {
       console.error("Failed to verify payment:", error);
       toast({
         title: "Failed to verify payment",
+        description: (error as AxiosError<CustomError>).response?.data?.message,
         variant: "destructive",
       });
     }

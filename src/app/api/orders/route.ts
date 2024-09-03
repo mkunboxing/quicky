@@ -54,7 +54,7 @@ export async function GET(request: Request) {
         "order_note": ""
       };
   
-      const response = await Cashfree.PGCreateOrder("2023-08-01", request);
+      const response = await Cashfree.PGCreateOrder("2022-09-01", request);
       console.log(response.data);
       return Response.json(response.data);
     } catch (error) {
