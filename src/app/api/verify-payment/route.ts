@@ -10,33 +10,33 @@ export async function GET(request: Request) {
   }
 
   try {
-    const options = {
-      method: "GET",
-      url: `https://sandbox.cashfree.com/pg/orders/${orderId}`,
+    const response = await axios.get(`https://sandbox.cashfree.com/pg/orders/${orderId}`, {
       headers: {
         accept: "application/json",
         "x-api-version": "2022-09-01",
-        "x-client-id": `${process.env.CASHFREE_APP_ID}`,
-        "x-client-secret": `${process.env.CASHFREE_SECRET_KEY}`,
+        "x-client-id": process.env.CASHFREE_APP_ID!,
+        "x-client-secret": process.env.CASHFREE_SECRET_KEY!,
       },
-    };
+    });
 
-    axios
-      .request(options)
-      .then(function (response) {
-        console.log(response.data);
-        console.log(response.data.data.cf_order_id);
-        console.log(response.data.cf_order_id);
-        if (response.data.payment_status === "PAID") {
-          return Response.redirect("http://localhost:3000/success");
-        }else{
-          return Response.redirect("http://localhost:3000/failure");
-        }
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
+    const { payment_status, cf_order_id } = response.data;
+    console.log(response.data);
+    console.log("Order ID:", cf_order_id, "Payment Status:", response.data.order_status);
+
+    // Return the JSON response from the server
+    if (response.data.order_status === "PAID") {
+      return new Response(
+        JSON.stringify({ message: "Payment verified successfully!", orderId: cf_order_id, status: payment_status }),
+        { status: 200 }
+      );
+    } else {
+      return new Response(
+        JSON.stringify({ message: "Payment verification failed.", orderId: cf_order_id, status: payment_status }),
+        { status: 400 }
+      );
+    }
   } catch (error) {
-    return Response.json({ message: "Error verifying payment" }, { status: 500 });
+    console.error("Error verifying payment:", error);
+    return new Response(JSON.stringify({ message: "Error verifying payment" }), { status: 500 });
   }
 }

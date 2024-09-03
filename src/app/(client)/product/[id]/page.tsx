@@ -125,13 +125,13 @@ const SingleProduct = () => {
   const verifyPayment = async (orderId: string) => {
     console.log("Verifying payment for order:", orderId);
     try {
-      const response = await axios.get(`/api/verify-payment?order_id=${orderId}`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/verify-payment?order_id=${orderId}`);
       const data = response.data;
 
       console.log("Payment verification response:", data);
-      setPaymentStatus(data.payment_status); // Update state with payment status
+      setPaymentStatus(data.order_status); // Update state with payment status
 
-      if (data.payment_status === "SUCCESS") {
+      if (data.order_status === "SUCCESS") {
         // Handle successful payment
         alert("Payment verified successfully!");
       } else {
