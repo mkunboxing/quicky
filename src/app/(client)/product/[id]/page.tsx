@@ -96,7 +96,7 @@ const SingleProduct = () => {
 
       // Fetch payment session ID after placing order
       try {
-        const response = await axios.get(`/api/orders?order_amount=${price}`);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_amount=${price}`);
         if (response.data && response.data.payment_session_id) {
           setPaymentSessionId(response.data.payment_session_id);
 
