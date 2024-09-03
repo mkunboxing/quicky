@@ -119,72 +119,92 @@ const SingleProduct = () => {
       });
     },
   });
-  
+
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+
   const verifyPayment = async (orderId: string) => {
     try {
-      const options = {
-        method: 'GET',
-        url: `https://sandbox.cashfree.com/pg/orders/${orderId}/payments`,
-        headers: {
-          accept: 'application/json',
-          'x-api-version': '2022-09-01',
-          'x-client-id': process.env.CASHFREE_APP_ID,
-          'x-client-secret': process.env.CASHFREE_SECRET_KEY
-        }
-      };
-  
-      console.log(process.env.CASHFREE_APP_ID);
-      console.log(process.env.CASHFREE_SECRET_KEY);
-  
-      let res = await axios.request(options);
-      const response = res.data;
-  
-      console.log("Payment verification response:", response);
-  
-      // Assuming `response` is an array of payment objects
-      if (response && response.length > 0) {
-        const payment = response[0]; // Get the first payment object
-  
-        if (payment.payment_status === "SUCCESS") {
-          toast({
-            title: "Payment verified",
-            description: "The payment was successful.",
-          });
-          alert("Payment verified");
-          // Handle post-payment actions here
-        } else {
-          toast({
-            title: "Payment not successful",
-            description: "The payment status is not successful.",
-            variant: "destructive",
-          });
-          alert("Payment not successful");
-          // Handle the unsuccessful payment scenario
-        }
+      const response = await axios.get(`/api/verify-payment?order_id=${orderId}`);
+      const data = response.data;
+
+      console.log("Payment verification response:", data);
+      setPaymentStatus(data.payment_status); // Update state with payment status
+
+      if (data.payment_status === "SUCCESS") {
+        // Handle successful payment
+        alert("Payment verified successfully!");
       } else {
-        toast({
-          title: "No payment found",
-          description: "No payment data available for this order.",
-          variant: "destructive",
-        });
+        // Handle unsuccessful payment
+        alert("Payment verification failed.");
       }
-  
-      return response;
     } catch (error) {
       console.error("Failed to verify payment:", error);
-      toast({
-        title: "Failed to verify payment",
-        description: (error as AxiosError<CustomError>).response?.data?.message,
-        variant: "destructive",
-      });
+      alert("Failed to verify payment.");
     }
   };
+  
+  // const verifyPayment = async (orderId: string) => {
+  //   try {
+  //     const options = {
+  //       method: 'GET',
+  //       url: `https://sandbox.cashfree.com/pg/orders/${orderId}`,
+  //       headers: {
+  //         accept: 'application/json',
+  //         'x-api-version': '2022-09-01',
+  //         'x-client-id': `${process.env.CASHFREE_APP_ID}`,
+  //         'x-client-secret':`${process.env.CASHFREE_SECRET_KEY}`
+  //       }
+  //     };
+  
+  //     let res = await axios.request(options);
+  //     const response = res.data;
+  
+  //     console.log("Payment verification response:", response);
+  
+  //     // Assuming `response` is an array of payment objects
+  //     if (response && response.length > 0) {
+  //       const payment = response[0]; // Get the first payment object
+  
+  //       if (payment.payment_status === "SUCCESS") {
+  //         toast({
+  //           title: "Payment verified",
+  //           description: "The payment was successful.",
+  //         });
+  //         alert("Payment verified");
+  //         // Handle post-payment actions here
+  //       } else {
+  //         toast({
+  //           title: "Payment not successful",
+  //           description: "The payment status is not successful.",
+  //           variant: "destructive",
+  //         });
+  //         alert("Payment not successful");
+  //         // Handle the unsuccessful payment scenario
+  //       }
+  //     } else {
+  //       toast({
+  //         title: "No payment found",
+  //         description: "No payment data available for this order.",
+  //         variant: "destructive",
+  //       });
+  //     }
+  
+  //     return response;
+  //   } catch (error) {
+  //     console.error("Failed to verify payment:", error);
+  //     toast({
+  //       title: "Failed to verify payment",
+  //       description: (error as AxiosError<CustomError>).response?.data?.message,
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
-  const handleVerifyPayment = async () => {
-    verifyPayment(orderId);
-    console.log("Payment verified:", orderId);
-    alert("Payment verified");
-  }
+  // const handleVerifyPayment = async () => {
+  //   verifyPayment(orderId);
+  //   console.log("Payment verified:", orderId);
+  //   alert("Payment verified");
+  // }
 
   // this is buttom
   const onSubmit = async (values: FormValues) => {
@@ -378,9 +398,6 @@ const SingleProduct = () => {
                       <Button>Sign in to buy</Button>
                     </Link>
                   )}
-                  <Button type="button" onClick={handleVerifyPayment}>
-                        verify payment
-                      </Button>
                   </div>
                 </form>
               </Form>
