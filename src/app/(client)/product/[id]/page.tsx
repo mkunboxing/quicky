@@ -42,9 +42,12 @@ const SingleProduct = () => {
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  const [orderId, setOrderId] = useState("");
-  const [cashfree, setCashfree] = useState<any>(null);
+  let orderId = "";
+  let cashfree: any;
+
   const [paymentSessionId, setPaymentSessionId] = useState("");
+  const [isProductAvailable, setIsProductAvailable] = useState(true);
+  const [showBuyNow, setShowBuyNow] = useState(false);
 
   const { data: product, isLoading: isProductLoading } = useQuery({
     queryKey: ["product", param.id],
@@ -70,101 +73,78 @@ const SingleProduct = () => {
   }, [qty, product]);
 
   // Initialize Cashfree
-  useEffect(() => {
-    const initializeCashfree = async () => {
-      try {
-        const cfInstance = await load({ mode: "sandbox" });
-        setCashfree(cfInstance);
-      } catch (error) {
-        console.error("Failed to load Cashfree:", error);
-        toast({
-          title: "Failed to initialize payment gateway.",
-          variant: "destructive",
-        });
-      }
-    };
+  const initializeCashfree = async () => {
+    cashfree = await load({
+      mode: "sandbox",
+    });
+  };
 
+  
     initializeCashfree();
-  }, [toast]);
 
-  // Mutation to place order and handle payment
+  const getSessionId = async () => {
+    try {
+      // passing order amount here, as we need to create order first to get payment session
+      let res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_amount=${price}`) 
+      
+      if(res.data && res.data.payment_session_id){
+
+        console.log(res.data)
+        orderId =res.data.order_id
+        console.log("Payment session ID:", orderId);
+        return res.data.payment_session_id
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const orderMutation = useMutation({
     mutationFn: (data: FormValues) => placeOrder(data),
     onSuccess: async (data) => {
-      console.log("Order placement success data:", data);
-      setOrderId(data?.order_id);
-
-      // Fetch payment session ID after placing order
-      try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_amount=${price}`);
-        if (response.data && response.data.payment_session_id) {
-          setPaymentSessionId(response.data.payment_session_id);
-
-          if (cashfree) {
-            const checkoutOptions = {
-              paymentSessionId: response.data.payment_session_id,
-              returnUrl: `${window.location.origin}/product/${param?.id}`,
-              
-            };
-
-            try {
-              await cashfree.checkout(checkoutOptions).then(function(result: any) {
-                if(result.error){
-                  alert(result.error.message)
-                }
-                if(result.redirect){
-                  console.log("Redirection")
-                }
-              })
-              console.log("Payment initialized");
-              verifyPayment(data?.order_id);
-            } catch (paymentError) {
-              console.error("Error initializing payment:", paymentError);
-              toast({
-                title: "Payment initialization failed.",
-                variant: "destructive",
-              });
-            }
-          } else {
-            toast({
-              title: "Payment gateway not initialized.",
-              variant: "destructive",
-            });
-          }
-        } else {
-          toast({
-            title: "Failed to retrieve payment session ID.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching payment session ID:", error);
-        toast({
-          title: "Failed to fetch payment session ID.",
-          variant: "destructive",
-        });
-      }
+      console.log("Db Transaction is complete", data);
+      setIsProductAvailable(true);
+      setShowBuyNow(true); // Show "Buy Now" button on success
+      toast({
+        title: "Product is available. You can proceed to buy now."
+      });
     },
     onError: (error: AxiosError<CustomError>) => {
       console.error("Order placement error:", error);
+      setShowBuyNow(false); // Hide "Buy Now" button on error
       toast({
-        title: error.response?.data?.message || "Something went wrong",
+        title: error.response?.data?.message || "Product not available",
         variant: "destructive",
       });
     },
   });
-
+  
   const verifyPayment = async (orderId: string) => {
     try {
-      const response = await GetOrder(orderId);
-      console.log("Payment verification response:", response);
+      const options = {
+        method: 'GET',
+        url: `https://sandbox.cashfree.com/pg/orders/${orderId}`,
+        headers: {
+          accept: 'application/json',
+          'x-api-version': '2023-08-01',
+          'x-client-id': process.env.CASHFREE_APP_ID,
+          'x-client-secret': process.env.CASHFREE_SECRET_KEY
+        }
+      };
+      let res = await axios.request(options);
+      const response = res.data;
 
+      console.log("Payment verification response:", response);
+      
       if (response) {
         toast({
           title: "Payment verified",
         });
+        alert("Payment verified");
         // Handle post-payment actions here
       }
+      return response.data;
     } catch (error) {
       console.error("Failed to verify payment:", error);
       toast({
@@ -174,9 +154,60 @@ const SingleProduct = () => {
     }
   };
 
+  const handleVerifyPayment = async () => {
+    verifyPayment(orderId);
+    console.log("Payment verified:", orderId);
+    alert("Payment verified");
+  }
+
+  // this is buttom
   const onSubmit = async (values: FormValues) => {
     console.log("Form Values:", values);
     orderMutation.mutate(values);
+  };
+
+  const handleBuyNow = async () => {
+    try {
+      const sessionId = await getSessionId();
+      setPaymentSessionId(sessionId);
+      if (cashfree && sessionId) {
+        const checkoutOptions = {
+          paymentSessionId: sessionId,
+          redirectTarget: "_modal",
+          returnUrl: `${window.location.origin}/product/${param?.id}`,
+        };
+        try {
+          await cashfree.checkout(checkoutOptions).then(function (result: any) {
+            if (result.error) {
+              alert(result.error.message);
+            }
+            if (result.redirect) {
+              console.log("Redirection");
+            }
+          });
+          console.log("Payment initialized");
+          console.log("Order ID:", orderId);
+          verifyPayment(orderId);
+        } catch (paymentError) {
+          console.error("Error initializing payment:", paymentError);
+          toast({
+            title: "Payment initialization failed.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Payment gateway not initialized.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching payment session ID:", error);
+      toast({
+        title: "Failed to fetch payment session ID.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -307,14 +338,23 @@ const SingleProduct = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-3xl font-semibold">${price}</span>
                     {session ? (
-                      <Button type="submit" variant="outline">    
-                          Buy Now
+                    !showBuyNow ? (
+                      <Button type="submit" variant="outline">
+                        Check Availability
                       </Button>
                     ) : (
-                      <Link href={`/api/auth/signin?callbackUrl=${pathname}`}>
-                        <Button>Sign in to buy</Button>
-                      </Link>
-                    )}
+                      <Button type="button" onClick={handleBuyNow}>
+                        Buy Now
+                      </Button>
+                    )
+                  ) : (
+                    <Link href={`/api/auth/signin?callbackUrl=${pathname}`}>
+                      <Button>Sign in to buy</Button>
+                    </Link>
+                  )}
+                  <Button type="button" onClick={handleVerifyPayment}>
+                        verify payment
+                      </Button>
                   </div>
                 </form>
               </Form>

@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       let request = {
         order_amount: orderAmount,
         order_currency: "INR",
-        order_id: await generateOrderId(),
+        order_id: generateOrderId(),
         customer_details: {
           customer_id: "mukul",
           customer_phone: "7274989153",
