@@ -39,16 +39,20 @@ export async function GET(request: Request) {
   
     try {
       let request = {
-        "order_amount": orderAmount,
-        "order_currency": "INR",
-        "order_id": await generateOrderId(),
-        "customer_details": {
-          "customer_id": "mukul",
-          "customer_phone": "7274989153",
-          "customer_name": "mkunboxing",
-          "customer_email": "mkwebdev@example.com"
+        order_amount: orderAmount,
+        order_currency: "INR",
+        order_id: await generateOrderId(),
+        customer_details: {
+          customer_id: "mukul",
+          customer_phone: "7274989153",
+          customer_name: "mkunboxing",
+          customer_email: "mkwebdev@example.com",
         },
-      }
+        "order_meta": {
+            "notify_url": "https://webhook.site/790f90cb-46bb-4363-ab36-f687340dbc33"
+        },
+        "order_note": ""
+      };
   
       const response = await Cashfree.PGCreateOrder("2023-08-01", request);
       console.log(response.data);
@@ -200,4 +204,5 @@ export async function GET(request: Request) {
    
     
 }
+
   
