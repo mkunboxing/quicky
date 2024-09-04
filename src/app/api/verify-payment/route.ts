@@ -22,14 +22,17 @@ export async function GET(request: Request) {
     const { payment_status, cf_order_id } = response.data;
     console.log(response.data);
     console.log("Order ID:", cf_order_id, "Payment Status:", response.data.order_status);
+    let orderStatus = response.data.order_status;
 
     // Return the JSON response from the server
-    if (response.data.order_status === "PAID") {
+    if (orderStatus === "PAID") {
+      console.log("Payment verified successfully!");
       return new Response(
-        JSON.stringify({ message: "Payment verified successfully!", orderId: cf_order_id, status: payment_status }),
+        JSON.stringify({ message: "Payment verified successfully!", orderId: cf_order_id, status: response.data.order_status }),
         { status: 200 }
       );
     } else {
+      console.log("Payment verification failed!")
       return new Response(
         JSON.stringify({ message: "Payment verification failed.", orderId: cf_order_id, status: payment_status }),
         { status: 400 }

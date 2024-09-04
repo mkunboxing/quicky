@@ -1,7 +1,7 @@
 "use client";
 import { GetOrder, getSingleProduct, placeOrder } from "@/http/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import Header from "../../_components/header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -121,6 +121,7 @@ const SingleProduct = () => {
   });
 
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const router = useRouter()
 
   const verifyPayment = async (orderId: string) => {
     console.log("Verifying payment for order:", orderId);
@@ -129,12 +130,15 @@ const SingleProduct = () => {
       const data = response.data;
 
       console.log("Payment verification response:", data);
-      setPaymentStatus(data.order_status); // Update state with payment status
+      console.log("Order ID:", data.orderId, "Payment Status:", data.status);
+      setPaymentStatus(data.status); // Update state with payment status
 
-      if (data.order_status === "SUCCESS") {
+      if (data.status === "PAID") {
+        router.push('/success');
         // Handle successful payment
         alert("Payment verified successfully!");
       } else {
+        router.push('/failure');
         // Handle unsuccessful payment
         alert("Payment verification failed.");
       }
