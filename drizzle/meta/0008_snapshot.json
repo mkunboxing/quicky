@@ -1,5 +1,5 @@
 {
-  "id": "c068464a-9a7c-4f55-803f-b69f2eed45a8",
+  "id": "cb2bdbac-01dc-4f3e-b8ad-17515389b7ea",
   "prevId": "95c0760b-12e9-45d6-9df8-9924580da7b4",
   "version": "7",
   "dialect": "postgresql",
@@ -195,6 +195,12 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "payment_id": {
+          "name": "payment_id",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true
         },
         "user_id": {

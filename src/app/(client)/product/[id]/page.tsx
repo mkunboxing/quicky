@@ -29,6 +29,7 @@ import { useToast } from "@/components/ui/use-toast";
 // @ts-ignore
 import { load } from "@cashfreepayments/cashfree-js";
 import axios, { AxiosError } from "axios";
+import { or } from "drizzle-orm";
 
 type CustomError = {
   message: string;
@@ -42,7 +43,7 @@ const SingleProduct = () => {
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  let orderId = "";
+  let [orderId, setOrderId] = useState("");
   let cashfree: any;
 
   const [paymentSessionId, setPaymentSessionId] = useState("");
@@ -65,6 +66,7 @@ const SingleProduct = () => {
   });
 
   const qty = form.watch("qty");
+  
   const price = React.useMemo(() => {
     if (product?.price) {
       return product.price * qty;
@@ -79,31 +81,12 @@ const SingleProduct = () => {
     });
   };
 
-  
     initializeCashfree();
-
-  const getSessionId = async () => {
-    try {
-      // passing order amount here, as we need to create order first to get payment session
-      let res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_amount=${price}`) 
-      
-      if(res.data && res.data.payment_session_id){
-
-        console.log(res.data)
-        orderId =res.data.order_id
-        console.log("Payment session ID:", orderId);
-        return res.data.payment_session_id
-      }
-
-    } catch (error) {
-      console.log(error)
-    }
-  }
 
   const orderMutation = useMutation({
     mutationFn: (data: FormValues) => placeOrder(data),
     onSuccess: async (data) => {
-      console.log("Db Transaction is complete", data);
+      setOrderId(data.paymentId);// get the order id from the response
       setIsProductAvailable(true);
       setShowBuyNow(true); // Show "Buy Now" button on success
       toast({
@@ -119,6 +102,22 @@ const SingleProduct = () => {
       });
     },
   });
+
+  const getSessionId = async () => {
+    try {
+      // passing order amount here, as we need to create order first to get payment session
+      let res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_id=${orderId}&order_amount=${price}`) 
+      
+      if(res.data && res.data.payment_session_id){
+
+        console.log(res.data)
+        return res.data.payment_session_id
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const router = useRouter()
@@ -148,69 +147,6 @@ const SingleProduct = () => {
     }
   };
   
-  // const verifyPayment = async (orderId: string) => {
-  //   try {
-  //     const options = {
-  //       method: 'GET',
-  //       url: `https://sandbox.cashfree.com/pg/orders/${orderId}`,
-  //       headers: {
-  //         accept: 'application/json',
-  //         'x-api-version': '2022-09-01',
-  //         'x-client-id': `${process.env.CASHFREE_APP_ID}`,
-  //         'x-client-secret':`${process.env.CASHFREE_SECRET_KEY}`
-  //       }
-  //     };
-  
-  //     let res = await axios.request(options);
-  //     const response = res.data;
-  
-  //     console.log("Payment verification response:", response);
-  
-  //     // Assuming `response` is an array of payment objects
-  //     if (response && response.length > 0) {
-  //       const payment = response[0]; // Get the first payment object
-  
-  //       if (payment.payment_status === "SUCCESS") {
-  //         toast({
-  //           title: "Payment verified",
-  //           description: "The payment was successful.",
-  //         });
-  //         alert("Payment verified");
-  //         // Handle post-payment actions here
-  //       } else {
-  //         toast({
-  //           title: "Payment not successful",
-  //           description: "The payment status is not successful.",
-  //           variant: "destructive",
-  //         });
-  //         alert("Payment not successful");
-  //         // Handle the unsuccessful payment scenario
-  //       }
-  //     } else {
-  //       toast({
-  //         title: "No payment found",
-  //         description: "No payment data available for this order.",
-  //         variant: "destructive",
-  //       });
-  //     }
-  
-  //     return response;
-  //   } catch (error) {
-  //     console.error("Failed to verify payment:", error);
-  //     toast({
-  //       title: "Failed to verify payment",
-  //       description: (error as AxiosError<CustomError>).response?.data?.message,
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
-
-  // const handleVerifyPayment = async () => {
-  //   verifyPayment(orderId);
-  //   console.log("Payment verified:", orderId);
-  //   alert("Payment verified");
-  // }
-
   // this is buttom
   const onSubmit = async (values: FormValues) => {
     console.log("Form Values:", values);
@@ -225,7 +161,7 @@ const SingleProduct = () => {
         const checkoutOptions = {
           paymentSessionId: sessionId,
           redirectTarget: "_modal",
-          returnUrl: `${window.location.origin}/product/${param?.id}`,
+          // returnUrl: `${window.location.origin}/product/${param?.id}`,
         };
         try {
           await cashfree.checkout(checkoutOptions).then(function (result: any) {
@@ -235,6 +171,11 @@ const SingleProduct = () => {
             if (result.redirect) {
               console.log("Redirection");
             }
+            if(result.paymentDetails){
+              // This will be called whenever the payment is completed irrespective of transaction status
+              console.log("Payment has been completed, Check for Payment Status");
+              console.log(result.paymentDetails.paymentMessage);
+          }
           });
           console.log("Payment initialized");
           console.log("Order ID:", orderId);

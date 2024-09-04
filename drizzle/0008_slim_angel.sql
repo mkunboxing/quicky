@@ -1,1 +1,0 @@
-ALTER TABLE "orders" ALTER COLUMN "qty" SET DATA TYPE integer;

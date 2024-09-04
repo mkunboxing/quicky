@@ -11,7 +11,7 @@ import { orderSchema } from "@/lib/validators/orderSchema";
 import axios from "axios";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { getServerSession } from "next-auth";
-import {Cashfree} from "cashfree-pg";
+import {Cashfree, CreateOrderRequest} from "cashfree-pg";
 import crypto from 'crypto';
 
 
@@ -36,12 +36,12 @@ export async function GET(request: Request) {
     console.log('GET orders');
     const { searchParams } = new URL(request.url);
     const orderAmount = parseFloat(searchParams.get('order_amount') || '1.00');
-  
+    const orderId = searchParams.get('order_id'); // Extract orderId from query parameters
     try {
       let request = {
         order_amount: orderAmount,
         order_currency: "INR",
-        order_id: generateOrderId(),
+        order_id: orderId,
         customer_details: {
           customer_id: "mukul",
           customer_phone: "7274989153",
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
         "order_note": ""
       };
   
-      const response = await Cashfree.PGCreateOrder("2022-09-01", request);
+    const response = await Cashfree.PGCreateOrder("2022-09-01", request as CreateOrderRequest);
       console.log(response.data);
       return Response.json(response.data);
     } catch (error) {
@@ -115,6 +115,7 @@ export async function GET(request: Request) {
                 .insert(orders)
 
                 .values({
+                    paymentId: generateOrderId(),
                     ...validatedData,
                     // @ts-ignore
                     userId: session.token.id,
@@ -122,7 +123,7 @@ export async function GET(request: Request) {
                     // todo: move all statuses to enum or const
                     status: 'received',
                 })
-                .returning({ id: orders.id, price: orders.price });
+                .returning({ id: orders.id, price: orders.price, paymentId: orders.paymentId });
 
             // check stock
 

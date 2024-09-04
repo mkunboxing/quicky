@@ -69,6 +69,7 @@ export const inventories = pgTable('inventories', {
 
 export const orders = pgTable('orders', {
     id: serial('id').primaryKey(),
+    paymentId: text('payment_id').notNull(),
     userId: integer('user_id')
         .references(() => users.id, { onDelete: 'cascade' })
         .notNull(),
