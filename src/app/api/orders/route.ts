@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         },
         "order_meta": {
             "notify_url": "https://webhook.site/64a7374a-bf57-4472-8272-9d9df77447bf",
-            "return_url": "https://quicky1.vercel.app"
+            // "return_url": "http://localhost:3000"
         },
         "order_note": ""
       };

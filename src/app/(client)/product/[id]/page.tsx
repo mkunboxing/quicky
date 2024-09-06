@@ -176,8 +176,8 @@ const SingleProduct = () => {
       if (cashfree && sessionId) {
         const checkoutOptions = {
           paymentSessionId: sessionId,
-          redirectTarget: "_top",
-          // returnUrl: `${window.location.origin}/product/${param.id}`,
+          redirectTarget: "_modal",
+          // returnUrl: `${window.location.origin}`,
         };
         try {
           await cashfree.checkout(checkoutOptions).then(function (result: any) {
