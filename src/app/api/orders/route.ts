@@ -44,12 +44,13 @@ export async function GET(request: Request) {
         order_id: orderId,
         customer_details: {
           customer_id: "mukul",
-          customer_phone: "7274989153",
+          customer_phone: "7274989155",
           customer_name: "mkunboxing",
           customer_email: "mkwebdev@example.com",
         },
         "order_meta": {
-            "notify_url": "https://webhook.site/790f90cb-46bb-4363-ab36-f687340dbc33"
+            "notify_url": "https://webhook.site/64a7374a-bf57-4472-8272-9d9df77447bf",
+            "return_url": "https://quicky1.vercel.app"
         },
         "order_note": ""
       };

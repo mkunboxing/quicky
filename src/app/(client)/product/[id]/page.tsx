@@ -9,7 +9,7 @@ import Image from "next/image";
 import { Star, Loader2 } from "lucide-react"; // Import Loader2 for spinner
 import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { set, z } from "zod";
 import { orderSchema } from "@/lib/validators/orderSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -43,12 +43,14 @@ const SingleProduct = () => {
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  let [orderId, setOrderId] = useState("");
+  let [paymentOrderId, setPaymentOrderId] = useState("");
+  let [OrderId, setOrderId] = useState(0);
   let cashfree: any;
 
   const [paymentSessionId, setPaymentSessionId] = useState("");
   const [isProductAvailable, setIsProductAvailable] = useState(true);
   const [showBuyNow, setShowBuyNow] = useState(false);
+  const [isProcessingBuyNow, setIsProcessingBuyNow] = useState(false);
 
   const { data: product, isLoading: isProductLoading } = useQuery({
     queryKey: ["product", param.id],
@@ -75,18 +77,22 @@ const SingleProduct = () => {
   }, [qty, product]);
 
   // Initialize Cashfree
-  const initializeCashfree = async () => {
-    cashfree = await load({
-      mode: "sandbox",
-    });
-  };
+  
+    const initializeCashfree = async () => {
+        cashfree = await load({
+          mode: "sandbox", // Use "production" for production environment
+        });
+      
+    };
 
-    initializeCashfree();
+  initializeCashfree();
 
   const orderMutation = useMutation({
     mutationFn: (data: FormValues) => placeOrder(data),
     onSuccess: async (data) => {
-      setOrderId(data.paymentId);// get the order id from the response
+      console.log("Order created successfully:", data);
+      setOrderId(data.id);
+      setPaymentOrderId(data.paymentId);// get the order id from the response
       setIsProductAvailable(true);
       setShowBuyNow(true); // Show "Buy Now" button on success
       toast({
@@ -103,10 +109,12 @@ const SingleProduct = () => {
     },
   });
 
+  
+
   const getSessionId = async () => {
     try {
       // passing order amount here, as we need to create order first to get payment session
-      let res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_id=${orderId}&order_amount=${price}`) 
+      let res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_id=${paymentOrderId}&order_amount=${price}`) 
       
       if(res.data && res.data.payment_session_id){
 
@@ -122,28 +130,34 @@ const SingleProduct = () => {
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const router = useRouter()
 
-  const verifyPayment = async (orderId: string) => {
-    console.log("Verifying payment for order:", orderId);
+  const verifyPayment = async (paymentOrderId: string, orderId: number) => {
+    console.log("Verifying payment for order:", paymentOrderId);
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/verify-payment?order_id=${orderId}`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/verify-payment?payment_OrderId=${paymentOrderId}&orderId=${orderId}`);
       const data = response.data;
-
+  
       console.log("Payment verification response:", data);
       console.log("Order ID:", data.orderId, "Payment Status:", data.status);
       setPaymentStatus(data.status); // Update state with payment status
-
+  
       if (data.status === "PAID") {
+        toast({
+          title: "Payment verified successfully!",
+        });
         router.push('/success');
-        // Handle successful payment
         alert("Payment verified successfully!");
       } else {
+        toast({
+          title: data.message,
+          variant: "destructive",
+        });
         router.push('/failure');
-        // Handle unsuccessful payment
-        alert("Payment verification failed.");
+        alert(data.message || "Payment verification failed.");
       }
     } catch (error) {
       console.error("Failed to verify payment:", error);
       alert("Failed to verify payment.");
+      router.push('/failure');
     }
   };
   
@@ -153,20 +167,23 @@ const SingleProduct = () => {
     orderMutation.mutate(values);
   };
 
+  console.log(cashfree);
   const handleBuyNow = async () => {
+    setIsProcessingBuyNow(true);
     try {
       const sessionId = await getSessionId();
       setPaymentSessionId(sessionId);
       if (cashfree && sessionId) {
         const checkoutOptions = {
           paymentSessionId: sessionId,
-          redirectTarget: "_modal",
-          // returnUrl: `${window.location.origin}/product/${param?.id}`,
+          redirectTarget: "_top",
+          // returnUrl: `${window.location.origin}/product/${param.id}`,
         };
         try {
           await cashfree.checkout(checkoutOptions).then(function (result: any) {
             if (result.error) {
               alert(result.error.message);
+              setIsProcessingBuyNow(false);
             }
             if (result.redirect) {
               console.log("Redirection");
@@ -178,8 +195,8 @@ const SingleProduct = () => {
           }
           });
           console.log("Payment initialized");
-          console.log("Order ID:", orderId);
-          verifyPayment(orderId);
+          console.log("Order ID:", paymentOrderId);
+          verifyPayment(paymentOrderId, OrderId);
         } catch (paymentError) {
           console.error("Error initializing payment:", paymentError);
           toast({
@@ -199,6 +216,8 @@ const SingleProduct = () => {
         title: "Failed to fetch payment session ID.",
         variant: "destructive",
       });
+    } finally {
+      setIsProcessingBuyNow(false);
     }
   };
 
@@ -330,20 +349,42 @@ const SingleProduct = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-3xl font-semibold">${price}</span>
                     {session ? (
-                    !showBuyNow ? (
-                      <Button type="submit" variant="outline">
-                        Check Availability
-                      </Button>
+                      !showBuyNow ? (
+                        <Button
+                          type="submit"
+                          variant="outline"
+                          disabled={orderMutation.isPending}
+                        >
+                          {orderMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 animate-spin" />{" "}
+                              Checking...
+                            </>
+                          ) : (
+                            "Check Availability"
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          onClick={handleBuyNow}
+                          disabled={isProcessingBuyNow} // Disable the button when processing
+                        >
+                          {isProcessingBuyNow ? (
+                            <>
+                              <Loader2 className="mr-2 animate-spin" />{" "}
+                              Processing...
+                            </>
+                          ) : (
+                            "Buy Now"
+                          )}
+                        </Button>
+                      )
                     ) : (
-                      <Button type="button" onClick={handleBuyNow}>
-                        Buy Now
-                      </Button>
-                    )
-                  ) : (
-                    <Link href={`/api/auth/signin?callbackUrl=${pathname}`}>
-                      <Button>Sign in to buy</Button>
-                    </Link>
-                  )}
+                      <Link href={`/api/auth/signin?callbackUrl=${pathname}`}>
+                        <Button>Sign in to buy</Button>
+                      </Link>
+                    )}
                   </div>
                 </form>
               </Form>
