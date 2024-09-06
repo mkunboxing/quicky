@@ -80,7 +80,8 @@ const SingleProduct = () => {
   
     const initializeCashfree = async () => {
         cashfree = await load({
-          mode: "sandbox", // Use "production" for production environment
+          mode: "production",
+          // mode: "sandbox", // Use "production" for production environment
         });
       
     };

@@ -16,7 +16,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await axios.get(`https://sandbox.cashfree.com/pg/orders/${paymentOrderId}`, {
+    // const response = await axios.get(`https://sandbox.cashfree.com/pg/orders/${paymentOrderId}`, {
+    const response = await axios.get(`https://api.cashfree.com/pg/orders/${paymentOrderId}`, {
       headers: {
         accept: "application/json",
         "x-api-version": "2022-09-01",
