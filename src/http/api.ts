@@ -70,6 +70,11 @@ export const changeOrderStatus = async (data: OrderStatusData) => {
     return await response.data;
 };
 
+export const getMyOrders = async () => {
+    const response = await api.get(`/all-orders/history`);
+    return await response.data;
+};
+
 
 
 

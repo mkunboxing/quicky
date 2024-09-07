@@ -1,4 +1,4 @@
-// import { capitalizeFirstLetter } from '@/lib/utils';
+import { capitalizeFirstLetter } from '@/lib/utils';
 import React from 'react';
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -25,7 +25,3 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 export default StatusBadge;
 
-function capitalizeFirstLetter(str: string): string {
-    if (str.length === 0) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
