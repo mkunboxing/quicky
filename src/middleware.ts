@@ -7,13 +7,16 @@ export default withAuth({
 
             if (req.nextUrl.pathname.startsWith("/admin")) {
                 return token?.role === "admin";
-            } else {
-                return true;
+            }else if (req.nextUrl.pathname.startsWith("/account")) {
+                return token?.role === "customer";
+            }
+             else {
+                return false;
             }
         },
     },
 });
 
 export const config = {
-    matcher: ["/admin(/.*)?"],
+    matcher: ["/admin(/.*)?", "/account(/.*)?"],
 };
