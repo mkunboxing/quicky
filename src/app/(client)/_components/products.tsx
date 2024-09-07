@@ -1,13 +1,14 @@
 "use client";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getAllProducts } from "@/http/api";
 import { Product } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react"; // Assuming you're using Lucide icons
 
 const Products = () => {
   const skeletons = Array.from({ length: 4 });
@@ -15,6 +16,19 @@ const Products = () => {
     queryKey: ["products"],
     queryFn: getAllProducts, // this is to cache the data for 50 seconds
   });
+
+  // Local state to track loading for each button
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleBuyNowClick = (productId: string) => {
+    setLoading(productId); // Set loading state for the clicked button
+
+    // Simulate an action (e.g., API call) before navigation
+    setTimeout(() => {
+      setLoading(null); // Reset loading after the action is done
+      // Perform your action here, e.g., navigate to the product page or make an API call
+    }, 2000);
+  };
 
   return (
     <section className="bg-[#f5f5f5] px-5 py-14 md:py-20">
@@ -69,8 +83,14 @@ const Products = () => {
                         <Button
                           size={"sm"}
                           className="mt-5 w-full bg-brown-900 hover:bg-brown-800 active:bg-brown-700"
+                          disabled={loading === String(product.id)} // Disable button while loading
+                          onClick={() => handleBuyNowClick(String(product.id))}
                         >
-                          Buy Now
+                          {loading === String(product.id)? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            "Buy Now"
+                          )}
                         </Button>
                       </Link>
                     </div>
