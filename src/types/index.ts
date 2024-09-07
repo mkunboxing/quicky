@@ -40,3 +40,14 @@ export interface OrderData {
     address: string;
 }
 
+export interface AllOrder {
+    id: number;
+    product: string;
+    user: string;
+    type: string;
+    address: string;
+    status: string;
+    price: number;
+    qty: number;
+}
+

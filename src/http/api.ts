@@ -60,3 +60,11 @@ export const GetOrder = async (data: any) => {
     const response = await api.get(`/orders`, data);
     return await response.data;
 };
+export const getAllOrders = async () => {
+    const response = await api.get(`/all-orders`);
+    return await response.data;
+};
+
+
+
+

@@ -24,6 +24,13 @@ export async function GET() {
         paymentId: orders.paymentId,
         createdAt: orders.createdAt,
 
-    }).from(orders).leftJoin(products, eq(orders.productId, products.id)).leftJoin(users, eq(orders.userId, users.id)).orderBy(desc(orders.id));
+    }).from(orders).leftJoin(products, eq(orders.productId, products.id)).leftJoin(users, eq(orders.userId, users.id))
+    // join inventory(orderid)
+    // join delivery-persons(orderid)
+    // join warehouses(deliveryId)
+
+    // todo: add pagination , put index on Ids to imporve performance
+
+    .orderBy(desc(orders.id));
     return Response.json(allOrders);
 }
