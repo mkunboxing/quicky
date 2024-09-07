@@ -5,9 +5,23 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { unlink } from "node:fs/promises";
 import { desc } from "drizzle-orm";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/authOptions";
 
 export async function POST(request: Request) {
     // todo: check user access
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+        return Response.json({ message: 'Not allowed' }, { status: 401 });
+    }
+
+    // todo: check user access.
+    // @ts-ignore
+    if (session.token.role !== 'admin') {
+        return Response.json({ message: 'Not allowed' }, { status: 403 });
+    }
+
     const data = await request.formData();
 
     let validateData;

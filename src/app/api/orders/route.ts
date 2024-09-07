@@ -69,7 +69,7 @@ export async function GET(request: Request) {
   export async function POST(request: Request) {
     // get session
     const session = await getServerSession(authOptions);
-    console.log('session', session);
+    // console.log('session', session);
 
     if (!session) {
         return Response.json({ message: 'Not allowed' }, { status: 401 });
