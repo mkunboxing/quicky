@@ -51,3 +51,7 @@ export interface AllOrder {
     qty: number;
 }
 
+export interface OrderStatusData{
+    orderId: number;
+    status: string;
+}

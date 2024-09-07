@@ -1,5 +1,5 @@
 import { api } from "./client"
-import { DeliveryPerson, Inventory, InventoryData, OrderData, Warehouse } from '@/types';
+import { DeliveryPerson, Inventory, InventoryData, OrderData, OrderStatusData, Warehouse } from '@/types';
 export const getAllProducts = async () => {
     const response = await api.get("/products");
 
@@ -62,6 +62,11 @@ export const GetOrder = async (data: any) => {
 };
 export const getAllOrders = async () => {
     const response = await api.get(`/all-orders`);
+    return await response.data;
+};
+
+export const changeOrderStatus = async (data: OrderStatusData) => {
+    const response = await api.patch(`/all-orders/status`, data);
     return await response.data;
 };
 
