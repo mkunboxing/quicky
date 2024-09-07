@@ -145,14 +145,14 @@ const SingleProduct = () => {
         toast({
           title: "Payment verified successfully!",
         });
-        router.push('/success');
+        router.push('/payment/success');
         alert("Payment verified successfully!");
       } else {
         toast({
           title: data.message,
           variant: "destructive",
         });
-        router.push('/failure');
+        router.push('/payment/failure');
         alert(data.message || "Payment verification failed.");
       }
     } catch (error) {
