@@ -4,6 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import StatusBadge from './status-badge';
 
 
+
 export const columns: ColumnDef<AllOrder>[] = [
     {
         accessorKey: 'product',
@@ -29,7 +30,7 @@ export const columns: ColumnDef<AllOrder>[] = [
         id: 'status',
         header: 'Status',
         cell: ({ row }) => {
-            return StatusBadge({ status: row.original.status });
+            return <StatusBadge status={row.original.status} />;
         },
     },
 ];

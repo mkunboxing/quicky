@@ -8,7 +8,7 @@ const StatusBadge = ({ status }: { status: string }) => {
                 return 'bg-purple-600';
             case 'reserved':
                 return 'bg-amber-600';
-            case 'paid':
+            case 'PAID':
                 return 'bg-green-600';
             case 'completed':
                 return 'bg-gray-600';
@@ -19,7 +19,7 @@ const StatusBadge = ({ status }: { status: string }) => {
         <span
             className={`inline-block rounded-full px-3 py-1 text-xs font-semibold text-white ${getStatusColor()}`}>
             {capitalizeFirstLetter(status)}
-         </span>
+        </span>
     );
 };
 
