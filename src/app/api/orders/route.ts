@@ -34,7 +34,18 @@ function generateOrderId() {
 let finalOrder: any = null;
 
 export async function GET(request: Request) {
-    console.log('GET orders');
+
+    const session = await getServerSession(authOptions);
+    //@ts-ignore
+    const name = session.token.name || 'Anonymous';
+    //@ts-ignore
+    const email = session.token.email || 'Anonymous@example.com';
+    const id = email.split('@')[0];
+
+    if (!session) {
+        return Response.json({ message: 'Not allowed' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const orderAmount = parseFloat(searchParams.get('order_amount') || '1.00');
     const orderId = searchParams.get('order_id'); // Extract orderId from query parameters
@@ -44,10 +55,10 @@ export async function GET(request: Request) {
         order_currency: "INR",
         order_id: orderId,
         customer_details: {
-          customer_id: "mukul",
-          customer_phone: "7274989155",
-          customer_name: "mkunboxing",
-          customer_email: "mkwebdev@example.com",
+          customer_id: id,
+          customer_phone: "0000000000",
+          customer_name: name,
+          customer_email: email,
         },
         "order_meta": {
             "notify_url": "https://webhook.site/64a7374a-bf57-4472-8272-9d9df77447bf",

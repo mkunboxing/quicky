@@ -232,7 +232,7 @@ const SingleProduct = () => {
               <Skeleton className="aspect-square w-[20rem] bg-brown-100" />
             ) : (
               <Image
-                src={`/assets/${product?.image}`}
+                src={product?.image}
                 alt={product?.name ?? "image"}
                 width={0}
                 height={0}

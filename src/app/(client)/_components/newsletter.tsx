@@ -26,7 +26,7 @@ export default function NewsLetter() {
                     </Button>
                 </div>
                 <Image
-                    src="/choco-bg.jpg"
+                    src="https://res.cloudinary.com/djy5q5962/image/upload/v1725821003/choco-bg_rgr6ow.jpg"
                     alt="Hero Chololate"
                     fill
                     className="-z-10 rounded-3xl object-cover"

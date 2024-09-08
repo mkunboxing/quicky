@@ -3,10 +3,10 @@ import Image from 'next/image';
 
 export default function SpecialProducts() {
     const products = [
-        { src: '/product1.jpg', alt: 'product1', name: 'Cadbury Dairy Milk' },
-        { src: '/product2.jpg', alt: 'product2', name: 'Mars Bars' },
-        { src: '/product3.jpg', alt: 'product3', name: 'Lindt Excellence Bar' },
-        { src: '/product2.jpg', alt: 'product2', name: 'Mars Bars' },
+        { src: 'https://res.cloudinary.com/djy5q5962/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1725821005/product3_alm3nk.jpg', alt: 'product1', name: 'Cadbury Dairy Milk' },
+        { src: 'https://res.cloudinary.com/djy5q5962/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1725821003/product2_kyxhhl.jpg', alt: 'product2', name: 'Mars Bars' },
+        { src: 'https://res.cloudinary.com/djy5q5962/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1725821003/product1_rbetzg.jpg', alt: 'product3', name: 'Lindt Excellence Bar' },
+        { src: 'https://res.cloudinary.com/djy5q5962/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1725821005/product3_alm3nk.jpg', alt: 'product2', name: 'Mars Bars' },
     ];
 
     return (

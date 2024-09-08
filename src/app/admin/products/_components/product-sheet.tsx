@@ -1,14 +1,11 @@
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import React from "react";
 import CreateProductForm, { FormValues } from "./create-product-form";
-import { create } from "domain";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createProduct } from "@/http/api";
 import { useNewProduct } from "@/store/product/product-store";

@@ -36,6 +36,12 @@ export async function GET(request: Request) {
       try {
         // update order
         await db.update(orders).set({ status: "PAID" }).where(eq(orders.paymentId, paymentOrderId));
+
+        // delivery persons update only for checking purpose
+        await db.update(deliveryPersons).set({orderId: sql`NULL`}).where(eq(deliveryPersons.orderId, Number(orderId)));
+        // update inventory update only for checking purpose
+        await db.update(inventories).set({orderId: sql`NULL`}).where(eq(inventories.orderId, Number(orderId)));
+
         return Response.json({ message: "Payment verified successfully!", status: "PAID", orderId }, { status: 200 });
       } catch (err) {
         return Response.json({ message: "Failed to update order status", status: "FAILED", orderId }, { status: 500 });

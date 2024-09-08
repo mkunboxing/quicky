@@ -20,7 +20,7 @@ export default function Hero() {
             </div>
 
             <Image
-                src="/chocolate.jpg"
+                src="https://res.cloudinary.com/djy5q5962/image/upload/v1725821004/chocolate_mbxgtt.jpg"
                 alt="Hero Chololate"
                 fill
                 // width={0}

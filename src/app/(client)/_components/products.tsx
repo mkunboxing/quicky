@@ -40,6 +40,7 @@ const Products = () => {
           </h2>
           <Separator className="h-0.5 w-20 bg-brown-900" />
         </div>
+        
 
         <div className="mt-20 grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {isLoading ? (
@@ -62,12 +63,12 @@ const Products = () => {
                     className="flex flex-col items-start justify-center gap-5"
                   >
                     <Image
-                      src={`/assets/${product.image}`}
+                      src={product.image}
                       alt={product.name}
-                      width={0}
-                      height={0}
-                      sizes="100vw"
-                      style={{ width: "100%" }}
+                      width={300}
+                      height={300}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      // style={{ width: "100%" }}
                       className="aspect-square rounded-t-md object-cover shadow-lg hover:cursor-pointer"
                     />
 

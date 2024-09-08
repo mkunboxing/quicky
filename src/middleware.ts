@@ -8,7 +8,7 @@ export default withAuth({
             if (req.nextUrl.pathname.startsWith("/admin")) {
                 return token?.role === "admin";
             }else if (req.nextUrl.pathname.startsWith("/account")) {
-                return token?.role === "customer";
+                return token?.role === "customer" || token?.role === "admin";
             }
              else {
                 return false;

@@ -14,10 +14,15 @@ export default function About() {
                     <Separator className="w-20 bg-brown-900 h-0.5" />
                 </div>
                 <p className="text-center mt-10 w-10/12">
-                    Lorem ipsum, dolor sit amet consectetur adipisicing elit. Culpa, veritatis vero
-                    dolorem accusantium ea voluptatum libero accusamus doloremque debitis,
-                    voluptatibus ad incidunt dolore, iste sunt. Cumque repellat est dignissimos.
-                    Voluptatem eaque veniam deserunt quo. Molestiae at maxime nobis rerum eligendi.
+                    We are selling World Class chocolate products from around the world. We have
+                    been in the chocolate business for over 10 years. We are a family-owned business
+                    with a passion for quality. We are committed to providing the best products and 
+                    service to our customers. We are proud to offer a wide selection of chocolates and
+                    treats. We have something for everyone, from the casual chocolate lover to the
+                    elite chocolate master. We are dedicated to providing the best products and service
+                    to our customers. We are always looking for new and exciting products to add to our
+                    collection. We are constantly updating our inventory to provide the best selection
+                    of products. We are proud to offer a wide selection of chocolates and treats.
                 </p>
                 <Button className="mt-10 bg-brown-900 hover:bg-brown-800 active:bg-brown-700 px-8">
                     Shop Now

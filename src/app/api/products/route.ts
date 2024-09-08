@@ -7,16 +7,24 @@ import { unlink } from "node:fs/promises";
 import { desc } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configure Cloudinary
+cloudinary.config({ 
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+    api_key: process.env.CLOUDINARY_API_KEY, 
+    api_secret: process.env.CLOUDINARY_API_SECRET 
+  });
 
 export async function POST(request: Request) {
-    // todo: check user access
+
     const session = await getServerSession(authOptions);
 
     if (!session) {
         return Response.json({ message: 'Not allowed' }, { status: 401 });
     }
 
-    // todo: check user access.
+ 
     // @ts-ignore
     if (session.token.role !== 'admin') {
         return Response.json({ message: 'Not allowed' }, { status: 403 });
@@ -40,21 +48,48 @@ export async function POST(request: Request) {
     const inputImage = isServer
     ? (validateData.image as File)
     : (validateData.image as FileList)[0];
-const filename = `${Date.now()}.${inputImage.name.split('.').slice(-1)}`;
+// const filename = `${Date.now()}.${inputImage.name.split('.').slice(-1)}`;
      // mk.png to 1212125.png
 
+    // try {
+    //     const buffer = Buffer.from(await inputImage.arrayBuffer());
+    //     await writeFile(path.join(process.cwd(),"public/assets",filename),buffer);
+    // } catch (err) {
+    //     return Response.json({message: err}, {status: 500});
+    // }
+
+    let cloudinaryResponse;
     try {
-        const buffer = Buffer.from(await inputImage.arrayBuffer());
-        await writeFile(path.join(process.cwd(),"public/assets",filename),buffer);
+        const arrayBuffer = await inputImage.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        
+        cloudinaryResponse = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                { resource_type: "auto" },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            ).end(buffer);
+        });
     } catch (err) {
-        return Response.json({message: err}, {status: 500});
+        return Response.json({message: 'Failed to upload image to Cloudinary'}, {status: 500});
     }
 
+
+
     try {
-        await db.insert(products).values({...validateData, image:filename})
+        // await db.insert(products).values({...validateData, image:filename})
+        await db.insert(products).values({
+            ...validateData, 
+            image: (cloudinaryResponse as any).secure_url
+        });
     } catch (err) {
 
         // todo: remove stored image from fs
+        if (cloudinaryResponse) {
+            await cloudinary.uploader.destroy((cloudinaryResponse as any).public_id);
+        }
         
         return Response.json({message: 'Failed to store image to database'}, {status: 500});
     }
