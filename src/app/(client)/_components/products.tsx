@@ -27,7 +27,7 @@ const Products = () => {
     setTimeout(() => {
       setLoading(null); // Reset loading after the action is done
       // Perform your action here, e.g., navigate to the product page or make an API call
-    }, 2000);
+    }, 4000);
   };
 
   return (
