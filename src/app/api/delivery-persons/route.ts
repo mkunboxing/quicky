@@ -47,6 +47,8 @@ export async function GET(){
             name: deliveryPersons.name,
             phone: deliveryPersons.phone,
             warehouse: warehouses.name,
+            order: deliveryPersons.orderId
+            
           })
           .from(deliveryPersons)
           .leftJoin(warehouses, eq(deliveryPersons.warehouseId, warehouses.id))

@@ -16,7 +16,7 @@ const fontSans = FontSans({
 
 export const metadata: Metadata = {
   title: "Quicky Inc",
-  description: "The best online store in the world",
+  description: "Chocolate products from around the world.",
 };
 
 const ReactQueryDevtools = dynamic(

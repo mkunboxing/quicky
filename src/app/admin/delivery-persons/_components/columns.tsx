@@ -11,6 +11,9 @@ import { Product } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 
+function orderStatus() {
+    console.log("delivered");
+}
 export const columns: ColumnDef<Product>[] = [
     {
         accessorKey: 'name',
@@ -23,6 +26,10 @@ export const columns: ColumnDef<Product>[] = [
     {
         accessorKey: 'warehouse',
         header: 'Warehouse',
+    },
+    {
+        accessorKey: 'order',
+        header: 'Order',
     },
     {
         id: 'actions',
@@ -45,6 +52,7 @@ export const columns: ColumnDef<Product>[] = [
                         <DropdownMenuSeparator />
                         <DropdownMenuItem>View customer</DropdownMenuItem>
                         <DropdownMenuItem>View payment details</DropdownMenuItem>
+                        <DropdownMenuItem onClick={orderStatus}>Order Delivered</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
