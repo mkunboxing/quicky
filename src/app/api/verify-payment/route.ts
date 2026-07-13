@@ -2,7 +2,8 @@
 import { db } from "@/lib/db/db";
 import { deliveryPersons, inventories, orders } from "@/lib/db/schema";
 import axios from "axios";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
+
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -16,8 +17,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    // const response = await axios.get(`https://sandbox.cashfree.com/pg/orders/${paymentOrderId}`, {
-    const response = await axios.get(`https://api.cashfree.com/pg/orders/${paymentOrderId}`, {
+    const response = await axios.get(`https://sandbox.cashfree.com/pg/orders/${paymentOrderId}`, {
+    // const response = await axios.get(`https://api.cashfree.com/pg/orders/${paymentOrderId}`, {
       headers: {
         accept: "application/json",
         "x-api-version": "2022-09-01",
@@ -32,34 +33,83 @@ export async function GET(request: Request) {
     let orderStatus = response.data.order_status;
 
     if (orderStatus === "PAID") {
-      console.log("Payment verified successfully!");
+      console.log("Payment verified successfully — assigning delivery person...");
       try {
-        // update order
-        await db.update(orders).set({ status: "PAID" }).where(eq(orders.paymentId, paymentOrderId));
+        // Find the order to get its warehouse via the inventory
+        const orderRows = await db
+          .select({ id: orders.id })
+          .from(orders)
+          .where(eq(orders.paymentId, paymentOrderId))
+          .limit(1);
 
-        // delivery persons update only for checking purpose
-        await db.update(deliveryPersons).set({orderId: sql`NULL`}).where(eq(deliveryPersons.orderId, Number(orderId)));
-        // update inventory update only for checking purpose
-        await db.update(inventories).set({orderId: sql`NULL`}).where(eq(inventories.orderId, Number(orderId)));
+        if (!orderRows.length) {
+          return Response.json({ message: "Order not found", status: "FAILED" }, { status: 404 });
+        }
 
-        return Response.json({ message: "Payment verified successfully!", status: "PAID", orderId }, { status: 200 });
-      } catch (err) {
-        return Response.json({ message: "Failed to update order status", status: "FAILED", orderId }, { status: 500 });
+        const internalOrderId = orderRows[0].id;
+
+        // Get the warehouse linked to this order via inventory
+        const inventoryRow = await db
+          .select({ warehouseId: inventories.warehouseId })
+          .from(inventories)
+          .where(eq(inventories.orderId, internalOrderId))
+          .limit(1);
+
+        if (!inventoryRow.length || !inventoryRow[0].warehouseId) {
+          return Response.json({ message: "Could not determine warehouse for order", status: "FAILED" }, { status: 500 });
+        }
+
+        const warehouseId = inventoryRow[0].warehouseId;
+
+        // Assign a free delivery person from the same warehouse
+        await db.transaction(async (tx) => {
+          const availablePerson = await tx
+            .select()
+            .from(deliveryPersons)
+            .where(and(isNull(deliveryPersons.orderId), eq(deliveryPersons.warehouseId, warehouseId)))
+            .for("update")
+            .limit(1);
+
+          if (!availablePerson.length) {
+            throw new Error("No delivery person available");
+          }
+
+          await tx
+            .update(deliveryPersons)
+            .set({ orderId: internalOrderId })
+            .where(eq(deliveryPersons.id, availablePerson[0].id));
+
+          // Update order status to PAID
+          await tx.update(orders).set({ status: "PAID" }).where(eq(orders.id, internalOrderId));
+        });
+
+        return Response.json(
+          { message: "Payment verified and delivery person assigned!", status: "PAID", orderId },
+          { status: 200 }
+        );
+      } catch (err: any) {
+        console.error("Error assigning delivery person:", err);
+        return Response.json({ message: err.message || "Failed to assign delivery person", status: "FAILED", orderId }, { status: 500 });
       }
     } else {
-      console.log("Payment failed, deleting order");
-      try {
-        // delivery persons update
-        await db.update(deliveryPersons).set({orderId: sql`NULL`}).where(eq(deliveryPersons.orderId, Number(orderId)));
-        // update inventory update
-        await db.update(inventories).set({orderId: sql`NULL`}).where(eq(inventories.orderId, Number(orderId)));
-        // delete order
-        await db.delete(orders).where(eq(orders.id, Number(orderId)));
+      // Payment not completed (ACTIVE, EXPIRED, etc.)
+      // Do NOT delete the order or release inventory here.
+      // The client will show the COD popup:
+      //   → User chooses COD  : POST /api/orders/cod  → assigns delivery person
+      //   → User cancels      : DELETE /api/orders/cod → releases stock & deletes order
+      console.log("Payment not completed. Order kept in 'reserved' state for COD dialog.");
 
-        return Response.json({ message: "Payment verification failed.", status: "FAILED", orderId }, { status: 200 });
-      } catch (err) {
-        return Response.json({ message: "Error processing failed payment", status: "FAILED", orderId }, { status: 500 });
+      // Mark order to reflect payment failure (keeps the order alive)
+      if (orderId) {
+        try {
+          await db.update(orders).set({ status: "payment_failed" }).where(eq(orders.id, Number(orderId)));
+        } catch (_) { /* non-fatal */ }
       }
+
+      return Response.json(
+        { message: "Payment not completed. Choose Cash on Delivery or cancel.", status: "FAILED", orderId },
+        { status: 200 }
+      );
     }
   } catch (error) {
     console.error("Error verifying payment:", error);

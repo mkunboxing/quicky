@@ -17,8 +17,8 @@ import crypto from 'crypto';
 
 Cashfree.XClientId = process.env.CASHFREE_APP_ID;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION;
-// Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
+// Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION; // Enable when Cashfree account is activated for transactions
+Cashfree.XEnvironment = Cashfree.Environment.SANDBOX; // Use sandbox while testing
 
 function generateOrderId() {
     const uniqueId = crypto.randomBytes(16).toString('hex');
@@ -159,7 +159,7 @@ export async function GET(request: Request) {
                 return;
             }
 
-            // check delivery person availibility
+            // check delivery person availability (check only — do NOT assign yet)
             const availablePersons = await tx
                 .select()
                 .from(deliveryPersons)
@@ -169,7 +169,6 @@ export async function GET(request: Request) {
                         eq(deliveryPersons.warehouseId, warehouseResult[0].id)
                     )
                 )
-                .for('update')
                 .limit(1);
 
             if (!availablePersons.length) {
@@ -178,7 +177,7 @@ export async function GET(request: Request) {
                 return;
             }
 
-            // stock is available and delivery person is available
+            // stock is available and delivery person exists — reserve stock only
             // update inventories table and add order_id
             await tx
                 .update(inventories)
@@ -190,13 +189,8 @@ export async function GET(request: Request) {
                     )
                 );
 
-            // update delivery person
-            await tx
-                .update(deliveryPersons)
-                .set({ orderId: order[0].id })
-                .where(eq(deliveryPersons.id, availablePersons[0].id));
-
-            // update order
+            // DO NOT assign delivery person yet — will be assigned after payment confirmation
+            // update order status to 'reserved' (stock held, awaiting payment)
             await tx.update(orders).set({ status: 'reserved' }).where(eq(orders.id, order[0].id));
 
             return order[0];

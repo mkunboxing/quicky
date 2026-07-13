@@ -6,10 +6,10 @@ import React, { useEffect, useState } from "react";
 import Header from "../../_components/header";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
-import { Star, Loader2 } from "lucide-react"; // Import Loader2 for spinner
+import { Star, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
-import { set, z } from "zod";
+import { z } from "zod";
 import { orderSchema } from "@/lib/validators/orderSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -29,7 +29,6 @@ import { useToast } from "@/components/ui/use-toast";
 // @ts-ignore
 import { load } from "@cashfreepayments/cashfree-js";
 import axios, { AxiosError } from "axios";
-import { or } from "drizzle-orm";
 
 type CustomError = {
   message: string;
@@ -37,20 +36,87 @@ type CustomError = {
 
 type FormValues = z.infer<typeof orderSchema>;
 
+// ─── COD Confirmation Dialog ───────────────────────────────────────────────
+function CodDialog({
+  open,
+  onAccept,
+  onDecline,
+  isLoading,
+}: {
+  open: boolean;
+  onAccept: () => void;
+  onDecline: () => void;
+  isLoading: boolean;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      {/* Card */}
+      <div className="relative z-10 mx-4 w-full max-w-md rounded-2xl border border-brown-100 bg-white px-8 py-8 shadow-2xl">
+        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+          <svg className="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+        </div>
+        <h2 className="mt-3 text-xl font-bold text-brown-900">Payment not completed</h2>
+        <p className="mt-2 text-sm text-brown-500">
+          Your online payment was not completed. Would you like to proceed with{" "}
+          <span className="font-semibold text-brown-800">Cash on Delivery</span> instead?
+        </p>
+        <div className="mt-6 flex gap-3">
+          <button
+            id="cod-decline-btn"
+            onClick={onDecline}
+            disabled={isLoading}
+            className="flex-1 rounded-xl border border-brown-200 px-4 py-2.5 text-sm font-medium text-brown-700 transition hover:bg-brown-50 disabled:opacity-50"
+          >
+            No, Cancel Order
+          </button>
+          <button
+            id="cod-accept-btn"
+            onClick={onAccept}
+            disabled={isLoading}
+            className="flex-1 rounded-xl bg-brown-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brown-700 disabled:opacity-60"
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Confirming…
+              </span>
+            ) : (
+              "Yes, Cash on Delivery"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────────
 const SingleProduct = () => {
   const param = useParams();
   const { toast } = useToast();
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  let [paymentOrderId, setPaymentOrderId] = useState("");
-  let [OrderId, setOrderId] = useState(0);
-  let cashfree: any;
+  const [paymentOrderId, setPaymentOrderId] = useState("");
+  const [OrderId, setOrderId] = useState(0);
+  const cashfreeRef = React.useRef<any>(null);
 
   const [paymentSessionId, setPaymentSessionId] = useState("");
   const [isProductAvailable, setIsProductAvailable] = useState(true);
   const [showBuyNow, setShowBuyNow] = useState(false);
   const [isProcessingBuyNow, setIsProcessingBuyNow] = useState(false);
+
+  // COD dialog state
+  const [showCodDialog, setShowCodDialog] = useState(false);
+  const [isCodLoading, setIsCodLoading] = useState(false);
+  // Refs to current order ids for use inside async closures
+  const pendingPaymentOrderIdRef = React.useRef("");
+  const pendingOrderIdRef = React.useRef(0);
 
   const { data: product, isLoading: isProductLoading } = useQuery({
     queryKey: ["product", param.id],
@@ -68,7 +134,7 @@ const SingleProduct = () => {
   });
 
   const qty = form.watch("qty");
-  
+
   const price = React.useMemo(() => {
     if (product?.price) {
       return product.price * qty;
@@ -76,33 +142,30 @@ const SingleProduct = () => {
     return 0;
   }, [qty, product]);
 
-  // Initialize Cashfree
-  
+  // Initialize Cashfree once on mount
+  useEffect(() => {
     const initializeCashfree = async () => {
-        cashfree = await load({
-          mode: "production",
-          // mode: "sandbox", // Use "production" for production environment
-        });
-      
+      cashfreeRef.current = await load({
+        mode: "sandbox", // Switch to "production" when your Cashfree account is activated
+      });
+      console.log("Cashfree initialized:", cashfreeRef.current);
     };
-
-  initializeCashfree();
+    initializeCashfree();
+  }, []);
 
   const orderMutation = useMutation({
     mutationFn: (data: FormValues) => placeOrder(data),
     onSuccess: async (data) => {
       console.log("Order created successfully:", data);
       setOrderId(data.id);
-      setPaymentOrderId(data.paymentId);// get the order id from the response
+      setPaymentOrderId(data.paymentId);
       setIsProductAvailable(true);
-      setShowBuyNow(true); // Show "Buy Now" button on success
-      toast({
-        title: "Product is available. You can proceed to buy now."
-      });
+      setShowBuyNow(true);
+      toast({ title: "Product is available. You can proceed to buy now." });
     },
     onError: (error: AxiosError<CustomError>) => {
       console.error("Order placement error:", error);
-      setShowBuyNow(false); // Hide "Buy Now" button on error
+      setShowBuyNow(false);
       toast({
         title: error.response?.data?.message || "Product not available",
         variant: "destructive",
@@ -110,67 +173,107 @@ const SingleProduct = () => {
     },
   });
 
-  
+  const router = useRouter();
 
   const getSessionId = async () => {
     try {
-      // passing order amount here, as we need to create order first to get payment session
-      let res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_id=${paymentOrderId}&order_amount=${price}`) 
-      
-      if(res.data && res.data.payment_session_id){
-
-        console.log(res.data)
-        return res.data.payment_session_id
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/orders?order_id=${paymentOrderId}&order_amount=${price}`
+      );
+      if (res.data && res.data.payment_session_id) {
+        console.log(res.data);
+        return res.data.payment_session_id;
       }
-
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
-  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
-  const router = useRouter()
-
-  const verifyPayment = async (paymentOrderId: string, orderId: number) => {
-    console.log("Verifying payment for order:", paymentOrderId);
+  /**
+   * Called after Cashfree modal closes (regardless of success/failure).
+   * Verifies payment status with our backend.
+   * If PAID  → delivery person assigned by server, redirect to success.
+   * If FAILED → show COD popup.
+   */
+  const verifyPayment = async (pOrderId: string, oId: number) => {
+    console.log("Verifying payment for order:", pOrderId);
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/verify-payment?payment_OrderId=${paymentOrderId}&orderId=${orderId}`);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/verify-payment?payment_OrderId=${pOrderId}&orderId=${oId}`
+      );
       const data = response.data;
-  
       console.log("Payment verification response:", data);
-      console.log("Order ID:", data.orderId, "Payment Status:", data.status);
-      setPaymentStatus(data.status); // Update state with payment status
-  
+
       if (data.status === "PAID") {
-        toast({
-          title: "Payment verified successfully!",
-        });
-        router.push('/payment/success');
-        alert("Payment verified successfully!");
+        toast({ title: "Payment verified successfully!" });
+        router.push("/payment/success");
       } else {
-        toast({
-          title: data.message,
-          variant: "destructive",
-        });
-        router.push('/payment/failure');
-        alert(data.message || "Payment verification failed.");
+        // Payment incomplete — show COD dialog
+        pendingPaymentOrderIdRef.current = pOrderId;
+        pendingOrderIdRef.current = oId;
+        setShowCodDialog(true);
       }
     } catch (error) {
       console.error("Failed to verify payment:", error);
-      alert("Failed to verify payment.");
-      router.push('/failure');
+      // Still show COD dialog so the user can choose
+      pendingPaymentOrderIdRef.current = pOrderId;
+      pendingOrderIdRef.current = oId;
+      setShowCodDialog(true);
     }
   };
-  
-  // this is buttom
+
+  /** User chose Cash on Delivery */
+  const handleCodAccept = async () => {
+    setIsCodLoading(true);
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders/cod`, {
+        orderId: pendingOrderIdRef.current,
+      });
+      setShowCodDialog(false);
+      toast({ title: "Cash on Delivery confirmed! Delivery person assigned." });
+      router.push("/payment/success");
+    } catch (err: any) {
+      toast({
+        title: err.response?.data?.message || "Failed to confirm COD",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCodLoading(false);
+    }
+  };
+
+  /** User declined COD — cancel & release stock */
+  const handleCodDecline = async () => {
+    setIsCodLoading(true);
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders/cod`, {
+        data: { orderId: pendingOrderIdRef.current },
+      });
+      setShowCodDialog(false);
+      toast({ title: "Order cancelled. Reserved stock has been released.", variant: "destructive" });
+      // Reset form state so user can try again
+      setShowBuyNow(false);
+      setPaymentOrderId("");
+      setOrderId(0);
+      router.push("/");
+    } catch (err: any) {
+      toast({
+        title: err.response?.data?.message || "Failed to cancel order",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCodLoading(false);
+    }
+  };
+
   const onSubmit = async (values: FormValues) => {
     console.log("Form Values:", values);
     orderMutation.mutate(values);
   };
 
-  console.log(cashfree);
   const handleBuyNow = async () => {
     setIsProcessingBuyNow(true);
+    const cashfree = cashfreeRef.current;
     try {
       const sessionId = await getSessionId();
       setPaymentSessionId(sessionId);
@@ -178,45 +281,32 @@ const SingleProduct = () => {
         const checkoutOptions = {
           paymentSessionId: sessionId,
           redirectTarget: "_modal",
-          // returnUrl: `${window.location.origin}`,
         };
         try {
           await cashfree.checkout(checkoutOptions).then(function (result: any) {
             if (result.error) {
-              alert(result.error.message);
-              setIsProcessingBuyNow(false);
+              console.error("Cashfree checkout error:", result.error.message);
             }
             if (result.redirect) {
               console.log("Redirection");
             }
-            if(result.paymentDetails){
-              // This will be called whenever the payment is completed irrespective of transaction status
-              console.log("Payment has been completed, Check for Payment Status");
+            if (result.paymentDetails) {
+              console.log("Payment completed. Checking status…");
               console.log(result.paymentDetails.paymentMessage);
-          }
+            }
           });
-          console.log("Payment initialized");
-          console.log("Order ID:", paymentOrderId);
-          verifyPayment(paymentOrderId, OrderId);
+          console.log("Cashfree checkout done. Verifying payment…");
+          await verifyPayment(paymentOrderId, OrderId);
         } catch (paymentError) {
-          console.error("Error initializing payment:", paymentError);
-          toast({
-            title: "Payment initialization failed.",
-            variant: "destructive",
-          });
+          console.error("Error in checkout:", paymentError);
+          toast({ title: "Payment initialization failed.", variant: "destructive" });
         }
       } else {
-        toast({
-          title: "Payment gateway not initialized.",
-          variant: "destructive",
-        });
+        toast({ title: "Payment gateway not initialized.", variant: "destructive" });
       }
     } catch (error) {
       console.error("Error fetching payment session ID:", error);
-      toast({
-        title: "Failed to fetch payment session ID.",
-        variant: "destructive",
-      });
+      toast({ title: "Failed to fetch payment session ID.", variant: "destructive" });
     } finally {
       setIsProcessingBuyNow(false);
     }
@@ -224,6 +314,14 @@ const SingleProduct = () => {
 
   return (
     <>
+      {/* COD Dialog */}
+      <CodDialog
+        open={showCodDialog}
+        onAccept={handleCodAccept}
+        onDecline={handleCodDecline}
+        isLoading={isCodLoading}
+      />
+
       <Header />
       <section className="custom-height relative bg-[#f5f5f5]">
         <div className="z-50 mx-auto flex h-full max-w-6xl gap-x-10 px-5 py-14 md:py-20">
@@ -256,7 +354,6 @@ const SingleProduct = () => {
                 </div>
                 <span className="text-sm">144 Reviews</span>
               </div>
-
               <Skeleton className="mt-2 h-28 w-full bg-brown-100" />
               <Separator className="my-6 bg-brown-900" />
               <div className="flex items-center justify-between">
@@ -266,12 +363,8 @@ const SingleProduct = () => {
             </div>
           ) : (
             <div className="flex flex-1 flex-col gap-y-2">
-              <h2 className="text-sm tracking-widest text-brown-500">
-                BRAND NAME
-              </h2>
-              <h2 className="text-4xl font-semibold text-brown-900">
-                {product?.name}
-              </h2>
+              <h2 className="text-sm tracking-widest text-brown-500">BRAND NAME</h2>
+              <h2 className="text-4xl font-semibold text-brown-900">{product?.name}</h2>
 
               <div className="flex items-center gap-x-3">
                 <div className="flex items-center gap-x-0.5">
@@ -348,7 +441,7 @@ const SingleProduct = () => {
                   </div>
                   <Separator className="my-6 bg-brown-900" />
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-semibold">${price}</span>
+                    <span className="text-3xl font-semibold">₹{price}</span>
                     {session ? (
                       !showBuyNow ? (
                         <Button
@@ -358,8 +451,7 @@ const SingleProduct = () => {
                         >
                           {orderMutation.isPending ? (
                             <>
-                              <Loader2 className="mr-2 animate-spin" />{" "}
-                              Checking...
+                              <Loader2 className="mr-2 animate-spin" /> Checking...
                             </>
                           ) : (
                             "Check Availability"
@@ -369,12 +461,11 @@ const SingleProduct = () => {
                         <Button
                           type="button"
                           onClick={handleBuyNow}
-                          disabled={isProcessingBuyNow} // Disable the button when processing
+                          disabled={isProcessingBuyNow}
                         >
                           {isProcessingBuyNow ? (
                             <>
-                              <Loader2 className="mr-2 animate-spin" />{" "}
-                              Processing...
+                              <Loader2 className="mr-2 animate-spin" /> Processing...
                             </>
                           ) : (
                             "Buy Now"
@@ -382,7 +473,7 @@ const SingleProduct = () => {
                         </Button>
                       )
                     ) : (
-                      <Link href={`/api/auth/signin?callbackUrl=${pathname}`}>
+                      <Link href={`/login?callbackUrl=${pathname}`}>
                         <Button>Sign in to buy</Button>
                       </Link>
                     )}
