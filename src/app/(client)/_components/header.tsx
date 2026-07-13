@@ -8,13 +8,14 @@ import { usePathname } from 'next/navigation';
 export default function Header() {
     const pathname = usePathname();
     const session = useSession();
+    const role = (session.data as any)?.token?.role;
 
     const navItems = [
         { label: 'Home', href: '/' },
         // { label: 'Best Selling', href: '/best-selling' },
         // { label: 'Offers', href: '/offers' },
         { label: 'Orders', href: '/account/orders' },
-        { label: 'Admin', href: '/admin' },
+        ...(role === 'admin' ? [{ label: 'Admin', href: '/admin' }] : []),
     ];
 
     return (
@@ -42,7 +43,7 @@ export default function Header() {
               {session.status === "authenticated" ? (
                 <button onClick={() => signOut()}>LogOut</button>
               ) : (
-                <Link href="/api/auth/signin">Log In</Link>
+                <Link href="/login">Log In</Link>
               )}
             </li>
           </ul>

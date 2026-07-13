@@ -14,6 +14,7 @@ export const users = pgTable("users", {
     fname: varchar("fname", { length: 100 }).notNull(),
     lname: varchar("lname", { length: 100 }).notNull(),
     email: varchar("email", { length: 100 }).unique().notNull(),
+    password: varchar("password", { length: 255 }), // nullable — OAuth users won't have a password
     provider: varchar("provider", { length: 20 }),
     externalId: varchar("external_id", { length: 100 }).notNull(),
     image: text("image"),

@@ -1,7 +1,10 @@
 import { users } from "./../db/schema";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "../db/db";
 import { AuthOptions } from "next-auth";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -42,7 +45,53 @@ export const authOptions: AuthOptions = {
         }
       },
     }),
+
+    CredentialsProvider({
+      name: "Email & Password",
+      credentials: {
+        email: { label: "Email", type: "email", placeholder: "you@example.com" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required.");
+        }
+
+        // Find user by email
+        const result = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, credentials.email))
+          .limit(1);
+
+        const user = result[0];
+
+        if (!user) {
+          throw new Error("No account found with this email.");
+        }
+
+        if (!user.password) {
+          throw new Error("This account uses Google login. Please sign in with Google.");
+        }
+
+        // Compare submitted password with stored hash
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+
+        if (!isValid) {
+          throw new Error("Incorrect password. Please try again.");
+        }
+
+        return {
+          id: String(user.id),
+          name: `${user.fname} ${user.lname}`,
+          email: user.email,
+          image: user.image ?? undefined,
+          role: user.role,
+        };
+      },
+    }),
   ],
+
   callbacks: {
     session(data: any) {
       return data;
@@ -54,5 +103,9 @@ export const authOptions: AuthOptions = {
       }
       return token;
     },
+  },
+
+  pages: {
+    signIn: "/login", // Optional: customize the sign-in page path if you have one
   },
 };

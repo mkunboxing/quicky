@@ -64,6 +64,13 @@
       "when": 1725431339820,
       "tag": "0008_orange_maverick",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783938708255,
+      "tag": "0009_talented_infant_terrible",
+      "breakpoints": true
     }
   ]
 }
