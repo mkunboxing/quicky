@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import AuthProvider from "@/providers/auth-provider";
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -50,6 +51,7 @@ export default async function RootLayout({
         </QueryProvider>
         <Toaster />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
