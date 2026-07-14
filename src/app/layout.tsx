@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import AuthProvider from "@/providers/auth-provider";
+import { Analytics } from '@vercel/analytics/next';
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -48,6 +49,7 @@ export default async function RootLayout({
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryProvider>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );
